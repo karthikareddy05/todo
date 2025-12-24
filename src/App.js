@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
 function App() {
@@ -6,16 +6,29 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
 
+  // 🔹 LOAD tasks from localStorage (runs once)
+  useEffect(() => {
+    const savedTasks = JSON.parse(localStorage.getItem("tasks"));
+    if (savedTasks) {
+      setTasks(savedTasks);
+    }
+  }, []);
+
+  // 🔹 SAVE tasks to localStorage (runs when tasks change)
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
+
   const addTask = () => {
     if (input === "") return;
 
     if (editIndex !== null) {
       const updatedTasks = [...tasks];
-      updatedTasks[editIndex] = input;
+      updatedTasks[editIndex].text = input;
       setTasks(updatedTasks);
       setEditIndex(null);
     } else {
-      setTasks([...tasks, input]);
+      setTasks([...tasks, { text: input, completed: false }]);
     }
 
     setInput("");
@@ -26,8 +39,14 @@ function App() {
   };
 
   const editTask = (index) => {
-    setInput(tasks[index]);
+    setInput(tasks[index].text);
     setEditIndex(index);
+  };
+
+  const toggleComplete = (index) => {
+    const updatedTasks = [...tasks];
+    updatedTasks[index].completed = !updatedTasks[index].completed;
+    setTasks(updatedTasks);
   };
 
   return (
@@ -49,7 +68,17 @@ function App() {
       <div className="list">
         {tasks.map((task, index) => (
           <div className="task" key={index}>
-            <span>{task}</span>
+            <div className="left">
+              <input
+                type="checkbox"
+                checked={task.completed}
+                onChange={() => toggleComplete(index)}
+              />
+              <span className={task.completed ? "done" : ""}>
+                {task.text}
+              </span>
+            </div>
+
             <div>
               <button
                 className="delete-btn"
